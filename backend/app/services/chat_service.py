@@ -35,8 +35,26 @@ class ChatService:
             logger.error(f"Error generating LLM response: {str(e)}")
             raise
 
+        # Handle different response formats
+        if response is None:
+            raise ValueError("LLM returned None response")
+
+        # Try to get content, handling different response formats
+        content = None
+        if hasattr(response, 'content'):
+            content = response.content
+        elif isinstance(response, str):
+            content = response
+        else:
+            # Try string representation as fallback
+            content = str(response)
+
+        if content is None:
+            logger.error(f"LLM response format unexpected: {type(response)}, response: {response}")
+            raise ValueError("Could not extract content from LLM response")
+
         return {
-            "response": response.content,
+            "response": content,
             "sources": self._extract_sources(results),
             "context_used": len(results),
         }

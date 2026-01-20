@@ -56,7 +56,7 @@ class LLMProviderService:
             if not settings.ZAI_API_KEY:
                 raise ValueError("ZAI_API_KEY not configured")
             self._llm = ChatOpenAI(
-                model=model or "glm-4.7",
+                model=model or "glm-4",
                 openai_api_key=settings.ZAI_API_KEY,
                 base_url=settings.ZAI_BASE_URL,
                 temperature=0.7,
