@@ -110,14 +110,24 @@ class QdrantService:
     async def delete_document(self, document_id: str) -> int:
         """Delete all chunks associated with a document"""
         client = self._get_client()
-        result = client.delete(
+        # First count how many points will be deleted
+        count_result = client.count(
+            collection_name=self.collection_name,
+            count_filter=Filter(
+                must=[FieldCondition(key="document_id", match=MatchValue(value=document_id))]
+            ),
+        )
+        deleted_count = count_result.count
+
+        # Then delete the points
+        client.delete(
             collection_name=self.collection_name,
             points_selector=Filter(
                 must=[FieldCondition(key="document_id", match=MatchValue(value=document_id))]
             ),
         )
-        logger.info(f"Deleted document {document_id}")
-        return result.status
+        logger.info(f"Deleted document {document_id} with {deleted_count} chunks")
+        return deleted_count
 
     async def get_all_documents(self) -> List[Dict[str, Any]]:
         """Get all unique documents from the collection"""
