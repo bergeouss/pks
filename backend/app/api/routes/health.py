@@ -10,7 +10,7 @@ async def health_check():
     try:
         client = qdrant_service._get_client()
         collections = client.get_collections()
-        qdrant_connected = len(collections.collections) >= 0
+        qdrant_connected = collections is not None
 
         return {
             "status": "healthy",

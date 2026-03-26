@@ -25,7 +25,9 @@ A self-hosted, Docker-based personal knowledge management system with RAG-powere
 ### 1. Clone and Setup
 
 ```bash
-cd /home/fr33m1nd/CLAUDE/superclaude/pks
+# Clone the repository (replace with your actual repository URL)
+git clone https://github.com/yourusername/pks.git
+cd pks
 cp .env.example .env
 # Edit .env with your API keys
 ```
@@ -42,20 +44,52 @@ Services will be available at:
 - **API Docs**: http://localhost:8100/docs
 - **Qdrant Console**: http://localhost:7333/dashboard
 
-### 3. Ingest Content
+**Port Mappings:**
+| Service | Internal Port | External Port |
+|---------|---------------|---------------|
+| Frontend | 3000 | 3100 |
+| Backend | 8000 | 8100 |
+| Qdrant | 6333/6334 | 7333/7334 |
+
+### 3. Configure API Keys
+
+Edit `.env` and add at least one LLM provider key:
+
+```bash
+# Required: At least one LLM provider
+OPENAI_API_KEY=sk-...              # For GPT models
+DEEPSEEK_API_KEY=...               # For DeepSeek models
+ANTHROPIC_API_KEY=sk-ant-...       # For Claude models
+ZAI_API_KEY=...                    # For Zhipu GLM models
+
+# Required: Embedding provider
+GEMINI_API_KEY=...                 # For embeddings (recommended)
+
+# Optional: Defaults (see below)
+```
+
+### 4. Ingest Content
 
 **Option 1: Browser Extension** (Recommended)
-1. Load the extension in Chrome/Firefox:
-   - Navigate to `chrome://extensions/` (Chrome) or `about:debugging#/runtime/this-firefox` (Firefox)
-   - Enable "Developer mode"
-   - Click "Load unpacked" and select the `extension/` directory
-2. Navigate to any webpage and click the PKS extension icon
-3. Click "Save to PKS"
+
+1. Load the extension in Chrome/Edge:
+   - Navigate to `chrome://extensions/`
+   - Enable "Developer mode" (toggle in top right)
+   - Click "Load unpacked"
+   - Select the `extension/` directory from the PKS project
+
+2. Load the extension in Firefox:
+   - Navigate to `about:debugging#/runtime/this-firefox`
+   - Click "Load Temporary Add-on"
+   - Select `extension/manifest.json` from the PKS project
+
+3. Navigate to any webpage and click the PKS extension icon
+4. Click "Save to PKS"
 
 **Option 2: File Watcher**
 ```bash
 # Drop files in the watched directory
-cp mydocument.pdf data/inbox/
+cp mydocument.txt data/inbox/
 # File watcher will automatically process and ingest
 ```
 
@@ -66,7 +100,7 @@ curl -X POST http://localhost:8100/api/v1/ingest \
   -d '{"url": "https://example.com/article"}'
 ```
 
-### 4. Chat with Your Knowledge
+### 5. Chat with Your Knowledge
 
 Access the chat interface at http://localhost:3100/chat
 
@@ -76,16 +110,23 @@ The PKS Saver browser extension allows you to save web pages directly from your 
 
 ### Installation
 
-1. **Chrome/Edge**:
-   - Navigate to `chrome://extensions/`
-   - Enable "Developer mode" (toggle in top right)
-   - Click "Load unpacked"
-   - Select the `extension/` directory from the PKS project
+**Chrome/Edge:**
+1. Navigate to `chrome://extensions/`
+2. Enable "Developer mode" (toggle in top right)
+3. Click "Load unpacked"
+4. Select the `extension/` directory from the PKS project
 
-2. **Firefox**:
-   - Navigate to `about:debugging#/runtime/this-firefox`
-   - Click "Load Temporary Add-on"
-   - Select the `extension/` directory from the PKS project
+**Firefox:**
+1. Navigate to `about:debugging#/runtime/this-firefox`
+2. Click "Load Temporary Add-on"
+3. Select `extension/manifest.json` from the PKS project
+
+### Permissions
+
+The extension requires:
+- `activeTab` - Access to the current tab's content
+- `scripting` - Inject content scripts for page extraction
+- Host permission for `http://localhost:8100/*` - Communication with PKS backend
 
 ### Usage
 
@@ -101,9 +142,13 @@ The file watcher service monitors `data/inbox/` for new files and automatically 
 
 ### Supported File Types
 
-- **Text files**: `.txt`, `.md`
-- **Documents**: `.pdf`, `.docx` (coming soon)
-- **Web archives**: Saved HTML pages
+| Extension | Description | Status |
+|-----------|-------------|--------|
+| `.txt` | Plain text files | Supported |
+| `.md` | Markdown files | Supported |
+| `.pdf` | PDF documents | Supported |
+| `.docx` | Word documents | Planned |
+| `.html` | Saved web pages | Supported |
 
 ### Usage
 
@@ -117,7 +162,20 @@ cp mydocument.txt data/inbox/
 # 3. Move it to data/processed/ when done
 ```
 
-## API Endpoints
+### Troubleshooting
+
+If files aren't being processed:
+
+1. Check file watcher logs: `docker compose logs -f file-watcher`
+2. Verify file is in correct directory: `ls data/inbox/`
+3. Check backend health: `curl http://localhost:8100/api/v1/health`
+4. Ensure file type is supported (see table above)
+
+## API Documentation
+
+For complete API documentation with request/response examples, see [docs/API.md](docs/API.md).
+
+### Quick Reference
 
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
@@ -127,24 +185,135 @@ cp mydocument.txt data/inbox/
 | DELETE | `/api/v1/documents/:id` | Delete document |
 | GET | `/api/v1/health` | Health check |
 
+Interactive API documentation is available at http://localhost:8100/docs when the backend is running.
+
 ## Configuration
 
-Environment variables (see `.env.example`):
+Environment variables (create from `.env.example`):
+
+### LLM Providers (at least one required)
 
 ```bash
-# LLM Providers (at least one required)
+# OpenAI (GPT-4, GPT-3.5)
 OPENAI_API_KEY=sk-...
+
+# DeepSeek
 DEEPSEEK_API_KEY=...
+
+# Anthropic (Claude)
 ANTHROPIC_API_KEY=sk-ant-...
-ZAI_API_KEY=...              # Z.ai (Zhipu AI) GLM models
-GEMINI_API_KEY=...           # For embeddings
 
-# Default Providers
-DEFAULT_LLM_PROVIDER=zai                     # Options: openai, deepseek, anthropic, ollama, zai
-DEFAULT_EMBEDDING_PROVIDER=gemini            # Options: openai, gemini
+# Z.ai (Zhipu GLM models)
+ZAI_API_KEY=...
+ZAI_BASE_URL=https://open.bigmodel.cn/api/paas/v4
+```
 
-# Z.ai Configuration
-ZAI_BASE_URL=https://api.z.ai/api           # Z.ai API endpoint
+### Embedding Providers (required)
+
+```bash
+# Google Gemini (recommended for embeddings)
+GEMINI_API_KEY=...
+DEFAULT_EMBEDDING_PROVIDER=gemini
+DEFAULT_EMBEDDING_MODEL=text-embedding-3-small
+
+# OpenAI embeddings
+OPENAI_API_KEY=...
+DEFAULT_EMBEDDING_PROVIDER=openai
+```
+
+### Default Providers
+
+```bash
+# Choose your default LLM
+DEFAULT_LLM_PROVIDER=zai
+# Options: openai, deepseek, anthropic, ollama, zai
+```
+
+### Optional Configuration
+
+```bash
+# Qdrant (vector database)
+QDRANT_HOST=qdrant
+QDRANT_PORT=6333
+QDRANT_COLLECTION_NAME=knowledge_base
+
+# Ollama (local models)
+OLLAMA_BASE_URL=http://localhost:11434
+
+# Frontend
+NEXT_PUBLIC_API_URL=http://localhost:8100
+```
+
+## Docker Services
+
+### Service Architecture
+
+```
+┌─────────────┐
+│   Frontend  │ Next.js 16 + React 19
+│   :3100     │
+└──────┬──────┘
+       │
+       ↓
+┌─────────────┐     ┌──────────────────┐
+│   Backend   │────▶│   File Watcher    │
+│   :8100     │     │   (auto ingest)   │
+└──────┬──────┘     └──────────────────┘
+       │                        ↑
+       ↓                        │
+┌─────────────┐           ┌─────┴──────┐
+│   Qdrant    │           │  Inbox Dir │
+│   :7333     │           └────────────┘
+└─────────────┘
+
+┌──────────────────────────────┐
+│     Browser Extension         │
+│  (Save pages from browser)    │
+└──────────────────────────────┘
+```
+
+### Service Dependencies
+
+- **Frontend** depends on Backend
+- **Backend** depends on Qdrant (health check)
+- **File Watcher** depends on Backend
+
+All services have `restart: unless-stopped` policy.
+
+## Development
+
+### Running in Development Mode
+
+```bash
+# Backend (with hot reload)
+docker compose up backend
+
+# Frontend (development server)
+cd frontend
+npm install
+npm run dev
+
+# All services
+docker compose up
+```
+
+### Viewing Logs
+
+```bash
+# All services
+docker compose logs -f
+
+# Specific service
+docker compose logs -f backend
+docker compose logs -f frontend
+docker compose logs -f qdrant
+docker compose logs -f file-watcher
+```
+
+### Stopping Services
+
+```bash
+docker compose down
 ```
 
 ## Project Status
@@ -188,67 +357,6 @@ ZAI_BASE_URL=https://api.z.ai/api           # Z.ai API endpoint
 - Moves processed files to `data/processed/`
 - Python watchdog-based implementation
 
-## Development
-
-### Running in Development Mode
-
-```bash
-# Backend (with hot reload)
-docker compose up backend
-
-# Frontend (development server)
-cd frontend
-npm run dev
-
-# All services
-docker compose up
-```
-
-### Viewing Logs
-
-```bash
-# All services
-docker compose logs -f
-
-# Specific service
-docker compose logs -f backend
-docker compose logs -f frontend
-docker compose logs -f qdrant
-docker compose logs -f file-watcher
-```
-
-### Stopping Services
-
-```bash
-docker compose down
-```
-
-## Architecture
-
-```
-┌─────────────┐
-│   Frontend  │ Next.js 16 + React 19
-│   (Port 3100)│
-└──────┬──────┘
-       │
-       ↓
-┌─────────────┐     ┌──────────────────┐
-│   Backend   │────▶│   File Watcher    │
-│   (Port 8100)│     │   (auto ingest)   │
-└──────┬──────┘     └──────────────────┘
-       │                        ↑
-       ↓                        │
-┌─────────────┐           ┌─────┴──────┐
-│   Qdrant    │           │  Inbox Dir │
-│   (Port 7333)│           └────────────┘
-└─────────────┘
-
-┌──────────────────────────────┐
-│     Browser Extension         │
-│  (Save pages from browser)    │
-└──────────────────────────────┘
-```
-
 ## Troubleshooting
 
 ### Extension not connecting to backend
@@ -268,6 +376,17 @@ docker compose down
 1. Verify Qdrant connection: Check Settings page
 2. Check if embedding provider is configured (Gemini API key)
 3. Try re-indexing: Delete and re-ingest the document
+
+### Port already in use
+
+If default ports are already in use, modify the port mappings in `docker-compose.yml`:
+
+```yaml
+services:
+  frontend:
+    ports:
+      - "3101:3000"  # Change 3100 to 3101
+```
 
 ## License
 
