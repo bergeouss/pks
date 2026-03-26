@@ -21,10 +21,10 @@ class EmbeddingService:
                 if not settings.GEMINI_API_KEY:
                     raise ValueError("GEMINI_API_KEY not configured")
                 self._embeddings = GoogleGenerativeAIEmbeddings(
-                    model="models/text-embedding-004",
+                    model="models/embedding-001",
                     google_api_key=settings.GEMINI_API_KEY,
                 )
-                logger.info("Initialized Gemini embeddings (text-embedding-004)")
+                logger.info("Initialized Gemini embeddings (embedding-001)")
             else:  # openai
                 if not settings.OPENAI_API_KEY:
                     raise ValueError("OPENAI_API_KEY not configured")
