@@ -25,8 +25,8 @@ A self-hosted, Docker-based personal knowledge management system with RAG-powere
 ### 1. Clone and Setup
 
 ```bash
-# Clone the repository (replace with your actual repository URL)
-git clone https://github.com/yourusername/pks.git
+# Clone the repository
+git clone https://github.com/bergeouss/pks.git
 cd pks
 cp .env.example .env
 # Edit .env with your API keys
