@@ -16,7 +16,20 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+          <Link
+            href="/ingest"
+            className="group p-8 bg-blue-600 dark:bg-blue-600 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 border border-blue-700 dark:border-blue-500"
+          >
+            <div className="text-4xl mb-4">📥</div>
+            <h2 className="text-2xl font-semibold text-white mb-2">
+              Ingest
+            </h2>
+            <p className="text-blue-100">
+              Add documents, URLs, and text to your knowledge base
+            </p>
+          </Link>
+
           <Link
             href="/chat"
             className="group p-8 bg-white dark:bg-slate-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 border border-slate-200 dark:border-slate-700"

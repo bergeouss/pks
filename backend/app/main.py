@@ -34,8 +34,8 @@ async def startup_event():
     from app.core.config import settings
 
     # Determine vector size based on embedding provider
-    # Gemini: 768, OpenAI: 1536
-    vector_size = 768 if settings.DEFAULT_EMBEDDING_PROVIDER == "gemini" else 1536
+    # Gemini gemini-embedding-001: 3072, OpenAI text-embedding-3-small: 1536
+    vector_size = 3072 if settings.DEFAULT_EMBEDDING_PROVIDER == "gemini" else 1536
     await qdrant_service.initialize_collection(vector_size=vector_size)
 
 

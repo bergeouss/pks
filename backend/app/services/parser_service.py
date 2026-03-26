@@ -4,12 +4,20 @@ from bs4 import BeautifulSoup
 import logging
 import PyPDF2
 import docx
+import google.generativeai as genai
+from PIL import Image
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
 
 class ParserService:
     """Parse various file and web formats"""
+
+    def __init__(self):
+        # Configure Gemini for image OCR
+        if settings.GEMINI_API_KEY:
+            genai.configure(api_key=settings.GEMINI_API_KEY)
 
     async def fetch_webpage(self, url: str) -> str:
         """Fetch and extract text from a webpage"""
@@ -47,8 +55,10 @@ class ParserService:
                 return self._parse_pdf(file_path)
             elif file_path_lower.endswith('.docx'):
                 return self._parse_docx(file_path)
-            elif file_path_lower.endswith('.txt'):
+            elif file_path_lower.endswith(('.txt', '.md')):
                 return self._parse_txt(file_path)
+            elif file_path_lower.endswith(('.png', '.jpg', '.jpeg', '.webp', '.gif')):
+                return await self._parse_image(file_path)
             else:
                 raise ValueError(f"Unsupported file type: {file_path}")
         except Exception as e:
@@ -73,9 +83,26 @@ class ParserService:
         return text.strip()
 
     def _parse_txt(self, file_path: str) -> str:
-        """Extract text from TXT"""
+        """Extract text from TXT or MD"""
         with open(file_path, 'r', encoding='utf-8') as file:
             return file.read().strip()
+
+    async def _parse_image(self, file_path: str) -> str:
+        """Extract text from image using Gemini Vision"""
+        try:
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            image = Image.open(file_path)
+
+            response = await model.generate_content_async([
+                "Extract all text content from this image. If there's no text, describe what you see in detail.",
+                image
+            ])
+
+            logger.info(f"Extracted text from image using Gemini Vision")
+            return response.text
+        except Exception as e:
+            logger.error(f"Error parsing image {file_path}: {str(e)}")
+            raise
 
 
 parser_service = ParserService()

@@ -55,6 +55,9 @@ export default function DocumentsPage() {
             <Link href="/chat" className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
               Chat
             </Link>
+            <Link href="/ingest" className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
+              Ingest
+            </Link>
             <Link href="/documents" className="text-blue-600 dark:text-blue-400 font-medium">
               Documents
             </Link>
