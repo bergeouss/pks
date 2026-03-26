@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.logging import setup_logging
-from app.api.routes import ingestion, chat, documents, health
+from app.api.routes import ingestion, chat, documents, health, settings as settings_route
 
 setup_logging()
 
@@ -25,6 +25,7 @@ app.include_router(ingestion.router, prefix="/api/v1", tags=["ingestion"])
 app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
 app.include_router(documents.router, prefix="/api/v1", tags=["documents"])
 app.include_router(health.router, prefix="/api/v1", tags=["health"])
+app.include_router(settings_route.router, prefix="/api/settings", tags=["settings"])
 
 
 @app.on_event("startup")

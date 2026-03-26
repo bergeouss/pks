@@ -10,6 +10,7 @@ class Settings(BaseSettings):
 
     # LLM Providers
     DEFAULT_LLM_PROVIDER: Literal["openai", "deepseek", "anthropic", "ollama", "zai"] = "openai"
+    DEFAULT_LLM_MODEL: str = "gpt-4o-mini"
     OPENAI_API_KEY: str = ""
     DEEPSEEK_API_KEY: str = ""
     ANTHROPIC_API_KEY: str = ""
