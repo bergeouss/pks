@@ -10,6 +10,13 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+# Default headers for web scraping to avoid 403 errors
+DEFAULT_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.5",
+}
+
 
 class ParserService:
     """Parse various file and web formats"""
@@ -19,14 +26,28 @@ class ParserService:
         if settings.GEMINI_API_KEY:
             genai.configure(api_key=settings.GEMINI_API_KEY)
 
-    async def fetch_webpage(self, url: str) -> str:
-        """Fetch and extract text from a webpage"""
+    async def fetch_webpage(self, url: str) -> tuple[str, str]:
+        """Fetch and extract text from a webpage
+
+        Returns:
+            tuple: (text_content, title)
+        """
         try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
+            async with httpx.AsyncClient(timeout=30.0, headers=DEFAULT_HEADERS) as client:
                 response = await client.get(url)
                 response.raise_for_status()
 
             soup = BeautifulSoup(response.content, "html.parser")
+
+            # Extract title
+            title = soup.find('title')
+            if title and title.text.strip():
+                title_text = title.text.strip()
+            else:
+                # Use URL as fallback
+                from urllib.parse import urlparse
+                parsed = urlparse(url)
+                title_text = parsed.netloc if parsed.netloc else url.split('/')[-1] or url
 
             # Remove script and style elements
             for script in soup(["script", "style", "nav", "footer", "header"]):
@@ -40,11 +61,14 @@ class ParserService:
             chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
             text = '\n'.join(chunk for chunk in chunks if chunk)
 
-            return text
+            return text, title_text
 
         except Exception as e:
             logger.error(f"Error fetching webpage {url}: {str(e)}")
-            raise
+            # Return URL as fallback if fetch fails
+            from urllib.parse import urlparse
+            parsed = urlparse(url)
+            return url, parsed.netloc if parsed.netloc else url.split('/')[-1] or url
 
     async def parse_file(self, file_path: str) -> str:
         """Parse text from various file formats"""

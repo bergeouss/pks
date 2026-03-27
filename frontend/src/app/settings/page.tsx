@@ -4,10 +4,19 @@ import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
 import Link from 'next/link'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8100'
+
 interface HealthStatus {
   status: string
   qdrant_connected: boolean
   collection_name: string
+}
+
+interface SettingsResponse {
+  llm_provider: string
+  llm_model: string
+  embedding_provider: string
+  embedding_model: string
 }
 
 interface SettingsState {
@@ -15,19 +24,8 @@ interface SettingsState {
   llmModel: string
   embeddingProvider: string
   embeddingModel: string
-}
-
-const LLM_MODELS: Record<string, string[]> = {
-  openai: ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'],
-  deepseek: ['deepseek-chat'],
-  anthropic: ['claude-3-haiku-20240307', 'claude-3-sonnet-20240229', 'claude-3-opus-20240229'],
-  ollama: ['llama3', 'mistral', 'gemma2'],
-  zai: ['glm-5', 'glm-4', 'glm-4-plus', 'glm-4-air'],
-}
-
-const EMBEDDING_MODELS: Record<string, string[]> = {
-  openai: ['text-embedding-3-small', 'text-embedding-3-large', 'text-embedding-ada-002'],
-  gemini: ['gemini-embedding-2-preview', 'gemini-embedding-001'],
+  availableLLMModels?: Record<string, string[]>
+  availableEmbeddingModels?: Record<string, string[]>
 }
 
 export default function SettingsPage() {
@@ -53,14 +51,130 @@ export default function SettingsPage() {
 
   const loadSettings = async () => {
     try {
-      const response = await fetch('/api/settings')
-      if (response.ok) {
-        const data = await response.json()
-        setSettings(data)
-      }
+      const data: SettingsResponse = await api.getSettings()
+      setSettings({
+        llmProvider: data.llm_provider,
+        llmModel: data.llm_model,
+        embeddingProvider: data.embedding_provider,
+        embeddingModel: data.embedding_model,
+      })
+      // Load models for the selected providers
+      loadLLMModels(data.llm_provider)
+      loadEmbeddingModels(data.embedding_provider)
     } catch (err) {
       console.error('Failed to load settings:', err)
     }
+  }
+
+  const loadLLMModels = async (provider: string) => {
+    // Fallback models when API is unavailable or returns Docker-serialized format
+    const fallbackModels: Record<string, string[]> = {
+      openai: ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'],
+      deepseek: ['deepseek-chat', 'deepseek-coder'],
+      anthropic: ['claude-3-5-haiku-20241022', 'claude-3-5-sonnet-20241022', 'claude-3-opus-20240229', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307'],
+      ollama: [],  // Will be populated from local Ollama if running
+      zai: ['glm-4.5', 'glm-4.5-air', 'glm-4.6', 'glm-4.7', 'glm-5', 'glm-5-turbo'],
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/v1/settings/v1/llm-models`)
+      if (response.ok) {
+        const text = await response.text()
+        let data
+
+        try {
+          data = JSON.parse(text)
+          // Check if models contain actual data or Docker-serialized "[string] (N)" format
+          const firstProvider = Object.keys(data.models || {})[0]
+          if (firstProvider && typeof data.models[firstProvider]?.[0] === 'string' && data.models[firstProvider][0].includes('[string]')) {
+            // Docker serialization detected, use fallback
+            console.warn('Docker serialization detected, using fallback models')
+            data = { models: fallbackModels }
+          }
+        } catch {
+          // Parse Python repr format like: "['glm-5', 'glm-4']"
+          const match = text.match(/\[([^\]]*)\]/)
+          if (match && !match[1].includes('[string]')) {
+            const models = match[1].split(',').map(m => m.trim().replace(/^'|"|'$|"$/g, ''))
+            data = { models: { [provider]: models } }
+          } else {
+            console.warn('Could not parse models, using fallback')
+            data = { models: fallbackModels }
+          }
+        }
+        setSettings(prev => ({
+          ...prev,
+          availableLLMModels: data.models,
+          llmModel: data.models?.[provider]?.[0] || prev.llmModel
+        }))
+      }
+    } catch (err) {
+      console.error('Failed to load LLM models:', err)
+      // Use fallback on error
+      setSettings(prev => ({
+        ...prev,
+        availableLLMModels: fallbackModels,
+        llmModel: fallbackModels[provider]?.[0] || prev.llmModel
+      }))
+    }
+  }
+
+  const loadEmbeddingModels = async (provider: string) => {
+    // Fallback embedding models when API is unavailable
+    const fallbackModels: Record<string, string[]> = {
+      openai: ['text-embedding-3-small', 'text-embedding-3-large', 'text-embedding-ada-002'],
+      gemini: ['gemini-embedding-2-preview', 'gemini-embedding-001'],
+      ollama: ['nomic-embed-text', 'mxbai-embed-large', 'bge-m3'],
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/v1/settings/v1/embedding-models`)
+      if (response.ok) {
+        const text = await response.text()
+        let data
+
+        try {
+          data = JSON.parse(text)
+          // Check if models contain actual data or Docker-serialized "[string] (N)" format
+          const firstProvider = Object.keys(data.models || {})[0]
+          if (firstProvider && typeof data.models[firstProvider]?.[0] === 'string' && data.models[firstProvider][0].includes('[string]')) {
+            console.warn('Docker serialization detected in embedding models, using fallback')
+            data = { models: fallbackModels }
+          }
+        } catch {
+          const match = text.match(/\[([^\]]*)\]/)
+          if (match && !match[1].includes('[string]')) {
+            const models = match[1].split(',').map(m => m.trim().replace(/^'|"|'$|"$/g, ''))
+            data = { models: { [provider]: models } }
+          } else {
+            console.warn('Could not parse embedding models, using fallback')
+            data = { models: fallbackModels }
+          }
+        }
+        setSettings(prev => ({
+          ...prev,
+          availableEmbeddingModels: data.models,
+          embeddingModel: data.models?.[provider]?.[0] || prev.embeddingModel
+        }))
+      }
+    } catch (err) {
+      console.error('Failed to load embedding models:', err)
+      setSettings(prev => ({
+        ...prev,
+        availableEmbeddingModels: fallbackModels,
+        embeddingModel: fallbackModels[provider]?.[0] || prev.embeddingModel
+      }))
+    }
+  }
+
+  const handleLLMProviderChange = (value: string) => {
+    setSettings(prev => ({ ...prev, llmProvider: value, llmModel: '' }))
+    loadLLMModels(value)
+  }
+
+  const handleEmbeddingProviderChange = (value: string) => {
+    setSettings(prev => ({ ...prev, embeddingProvider: value, embeddingModel: '' }))
+    loadEmbeddingModels(value)
   }
 
   const handleSettingChange = (key: keyof SettingsState, value: string) => {
@@ -69,13 +183,17 @@ export default function SettingsPage() {
 
   const saveSettings = async () => {
     try {
-      await fetch('/api/settings', {
+      const response = await fetch(`${API_URL}/api/v1/settings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings),
       })
-      alert('Settings saved successfully!')
-      loadSettings()
+      if (response.ok) {
+        alert('Settings saved successfully!')
+        loadSettings()
+      } else {
+        alert('Failed to save settings')
+      }
     } catch (err) {
       console.error('Failed to save settings:', err)
       alert('Failed to save settings')
@@ -86,6 +204,15 @@ export default function SettingsPage() {
     loadHealth()
     loadSettings()
   }, [])
+
+  useEffect(() => {
+    if (settings.llmProvider) {
+      loadLLMModels(settings.llmProvider)
+    }
+    if (settings.embeddingProvider) {
+      loadEmbeddingModels(settings.embeddingProvider)
+    }
+  }, [settings.llmProvider, settings.embeddingProvider])
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -180,7 +307,7 @@ export default function SettingsPage() {
               </label>
               <select
                 value={settings.llmProvider}
-                onChange={(e) => handleSettingChange('llmProvider', e.target.value)}
+                onChange={(e) => handleLLMProviderChange(e.target.value)}
                 className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="openai">OpenAI</option>
@@ -200,11 +327,11 @@ export default function SettingsPage() {
                 onChange={(e) => handleSettingChange('llmModel', e.target.value)}
                 className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {LLM_MODELS[settings.llmProvider]?.map((model) => (
+                {settings.availableLLMModels?.[settings.llmProvider]?.map((model) => (
                   <option key={model} value={model}>
                     {model}
                   </option>
-                ))}
+                )) || <option value="">Loading models...</option>}
               </select>
             </div>
 
@@ -215,7 +342,7 @@ export default function SettingsPage() {
               </label>
               <select
                 value={settings.embeddingProvider}
-                onChange={(e) => handleSettingChange('embeddingProvider', e.target.value)}
+                onChange={(e) => handleEmbeddingProviderChange(e.target.value)}
                 className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="openai">OpenAI</option>
@@ -232,11 +359,11 @@ export default function SettingsPage() {
                 onChange={(e) => handleSettingChange('embeddingModel', e.target.value)}
                 className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {EMBEDDING_MODELS[settings.embeddingProvider]?.map((model) => (
+                {settings.availableEmbeddingModels?.[settings.embeddingProvider]?.map((model) => (
                   <option key={model} value={model}>
                     {model}
                   </option>
-                ))}
+                )) || <option value="">Loading models...</option>}
               </select>
             </div>
           </div>

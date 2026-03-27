@@ -1,5 +1,6 @@
 from langchain_openai import OpenAIEmbeddings
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_ollama import OllamaEmbeddings
 from app.core.config import settings
 from typing import List
 import logging
@@ -25,7 +26,7 @@ class EmbeddingService:
                     google_api_key=settings.GEMINI_API_KEY,
                 )
                 logger.info("Initialized Gemini embeddings (gemini-embedding-001)")
-            else:  # openai
+            elif self.provider == "openai":
                 if not settings.OPENAI_API_KEY:
                     raise ValueError("OPENAI_API_KEY not configured")
                 self._embeddings = OpenAIEmbeddings(
@@ -33,6 +34,14 @@ class EmbeddingService:
                     openai_api_key=settings.OPENAI_API_KEY,
                 )
                 logger.info(f"Initialized OpenAI embeddings: {settings.DEFAULT_EMBEDDING_MODEL}")
+            elif self.provider == "ollama":
+                self._embeddings = OllamaEmbeddings(
+                    model=settings.DEFAULT_EMBEDDING_MODEL or "mxbai-embed-large",
+                    base_url=settings.OLLAMA_BASE_URL,
+                )
+                logger.info(f"Initialized Ollama embeddings: {settings.DEFAULT_EMBEDDING_MODEL or 'mxbai-embed-large'}")
+            else:
+                raise ValueError(f"Unknown embedding provider: {self.provider}")
         return self._embeddings
 
     async def embed_text(self, text: str) -> List[float]:

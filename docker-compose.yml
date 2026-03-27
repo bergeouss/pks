@@ -23,6 +23,8 @@ services:
     container_name: pks-backend
     ports:
       - "8100:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=6333
@@ -30,14 +32,17 @@ services:
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - ZAI_API_KEY=${ZAI_API_KEY}
-      - ZAI_BASE_URL=${ZAI_BASE_URL:-https://open.bigmodel.cn/api/paas/v4}
+      - ZAI_BASE_URL=${ZAI_BASE_URL:-https://api.z.ai/api/coding/paas/v4}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - DEFAULT_LLM_PROVIDER=${DEFAULT_LLM_PROVIDER:-zai}
+      - DEFAULT_LLM_MODEL=${DEFAULT_LLM_MODEL:-gpt-4o-mini}
       - DEFAULT_EMBEDDING_PROVIDER=${DEFAULT_EMBEDDING_PROVIDER:-gemini}
       - DEFAULT_EMBEDDING_MODEL=${DEFAULT_EMBEDDING_MODEL:-text-embedding-3-small}
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
     volumes:
       - ./data:/app/data
       - ./backend/app:/app/app
+      - ./.env:/app/.env:ro
     depends_on:
       qdrant:
         condition: service_healthy
@@ -52,7 +57,7 @@ services:
     ports:
       - "3100:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8100
+      - NEXT_PUBLIC_API_URL=http://backend:8000
     depends_on:
       - backend
     restart: unless-stopped

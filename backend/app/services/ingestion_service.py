@@ -24,9 +24,11 @@ class IngestionService:
         if "youtube.com" in url or "youtu.be" in url:
             text = await youtube_service.get_transcript(url)
             metadata["source"] = "youtube"
+            metadata["title"] = f"YouTube: {url.split('=')[-1]}" if "v=" in url else "YouTube Video"
         else:
-            text = await parser_service.fetch_webpage(url)
+            text, title = await parser_service.fetch_webpage(url)
             metadata["source"] = "web"
+            metadata["title"] = title
 
         metadata["url"] = url
         return await self._process_text(text, metadata)
@@ -37,6 +39,11 @@ class IngestionService:
         text = await parser_service.parse_file(file_path)
         metadata["source"] = "file"
         metadata["filename"] = file_path
+        # Use filename as title (without extension)
+        import os
+        filename = os.path.basename(file_path)
+        title = os.path.splitext(filename)[0]
+        metadata["title"] = title
 
         return await self._process_text(text, metadata)
 
@@ -44,6 +51,10 @@ class IngestionService:
         """Ingest raw text"""
         metadata = metadata or {}
         metadata["source"] = "direct"
+        # Set default title for direct text if not provided
+        if "title" not in metadata:
+            # Use first 100 chars as title
+            metadata["title"] = text[:100].replace('\n', ' ')[:50] + "..."
         return await self._process_text(text, metadata)
 
     async def _process_text(self, text: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
@@ -73,12 +84,19 @@ class IngestionService:
         point_ids = await qdrant_service.upsert_chunks(chunk_data)
         logger.info(f"Stored {len(point_ids)} chunks in Qdrant")
 
-        return {
+        # Return metadata in response
+        result = {
             "document_id": document_id,
             "chunks_count": len(chunks),
             "point_ids": point_ids,
             "status": "success",
         }
+        # Add metadata fields
+        for key in ["title", "source", "url", "filename"]:
+            if key in metadata:
+                result[key] = metadata[key]
+
+        return result
 
 
 ingestion_service = IngestionService()

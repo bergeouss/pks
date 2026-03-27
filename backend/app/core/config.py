@@ -16,10 +16,10 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str = ""
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     ZAI_API_KEY: str = ""
-    ZAI_BASE_URL: str = "https://open.bigmodel.cn/api/paas/v4"
+    ZAI_BASE_URL: str = "https://api.z.ai/api/coding/paas/v4"
 
     # Embedding
-    DEFAULT_EMBEDDING_PROVIDER: Literal["openai", "gemini"] = "gemini"
+    DEFAULT_EMBEDDING_PROVIDER: Literal["openai", "gemini", "ollama"] = "gemini"
     DEFAULT_EMBEDDING_MODEL: str = "text-embedding-3-small"
     GEMINI_API_KEY: str = ""
 
@@ -30,9 +30,13 @@ class Settings(BaseSettings):
     # RAG
     TOP_K_RESULTS: int = 5
 
+    # Frontend
+    NEXT_PUBLIC_API_URL: str = "http://localhost:8000"
+
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"  # Allow extra fields in .env file
 
 
 settings = Settings()

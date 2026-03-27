@@ -14,7 +14,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3100", "http://localhost:8100"],
+    allow_origins=["*"],  # Allow all origins for development
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -25,7 +25,7 @@ app.include_router(ingestion.router, prefix="/api/v1", tags=["ingestion"])
 app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
 app.include_router(documents.router, prefix="/api/v1", tags=["documents"])
 app.include_router(health.router, prefix="/api/v1", tags=["health"])
-app.include_router(settings_route.router, prefix="/api/settings", tags=["settings"])
+app.include_router(settings_route.router, prefix="/api/v1/settings", tags=["settings"])
 
 
 @app.on_event("startup")
