@@ -56,6 +56,9 @@ async def upload_file(
     # Add filename to metadata
     meta_dict["filename"] = filename
     meta_dict["file_type"] = ext[1:]  # Remove the dot
+    # Set title from original filename (without extension)
+    title = os.path.splitext(filename)[0]
+    meta_dict["title"] = title
 
     # Save to temp file and process
     tmp_path = None

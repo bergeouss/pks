@@ -94,7 +94,7 @@ async def get_llm_models():
             logger.info(f"Fetched Z.ai models: {models['zai']}")
     except Exception as e:
         logger.warning(f"Could not fetch Z.ai models: {e}")
-        models["zai"] = ["glm-5", "glm-4", "glm-4-plus", "glm-4-air"]
+        models["zai"] = ["glm-5", "glm-4", "glm-4-plus", "glm-4-air", "glm-4.7-flash"]
 
     logger.info(f"Returning models for all providers: {list(models.keys())}")
     return {"models": models}

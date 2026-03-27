@@ -73,7 +73,7 @@ export default function SettingsPage() {
       deepseek: ['deepseek-chat', 'deepseek-coder'],
       anthropic: ['claude-3-5-haiku-20241022', 'claude-3-5-sonnet-20241022', 'claude-3-opus-20240229', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307'],
       ollama: [],  // Will be populated from local Ollama if running
-      zai: ['glm-4.5', 'glm-4.5-air', 'glm-4.6', 'glm-4.7', 'glm-5', 'glm-5-turbo'],
+      zai: ['glm-4.5', 'glm-4.5-air', 'glm-4.6', 'glm-4.7', 'glm-4.7-flash', 'glm-5', 'glm-5-turbo'],
     }
 
     try {
@@ -347,6 +347,7 @@ export default function SettingsPage() {
               >
                 <option value="openai">OpenAI</option>
                 <option value="gemini">Google Gemini</option>
+                <option value="ollama">Ollama (Local)</option>
               </select>
             </div>
 

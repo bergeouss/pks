@@ -43,7 +43,9 @@ class IngestionService:
         import os
         filename = os.path.basename(file_path)
         title = os.path.splitext(filename)[0]
-        metadata["title"] = title
+        # Only set title if not already in metadata
+        if "title" not in metadata:
+            metadata["title"] = title
 
         return await self._process_text(text, metadata)
 
