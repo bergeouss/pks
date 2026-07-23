@@ -183,10 +183,15 @@ export default function SettingsPage() {
 
   const saveSettings = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/v1/settings`, {
+      const response = await fetch(`${API_URL}/api/v1/settings/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
+        body: JSON.stringify({
+          llm_provider: settings.llmProvider,
+          llm_model: settings.llmModel,
+          embedding_provider: settings.embeddingProvider,
+          embedding_model: settings.embeddingModel,
+        }),
       })
       if (response.ok) {
         alert('Settings saved successfully!')
@@ -378,7 +383,7 @@ export default function SettingsPage() {
               Save Settings
             </button>
             <p className="text-xs text-slate-500 dark:text-slate-500 mt-2 text-center">
-              Note: Changes require backend restart to take effect
+              Changes take effect immediately (no restart needed). Switching embedding model after documents exist requires deleting the collection.
             </p>
           </div>
         </div>

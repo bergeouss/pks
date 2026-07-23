@@ -1,15 +1,17 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Literal
+
+from app.core.runtime_settings import get_runtime_settings, save_runtime_settings
 
 router = APIRouter()
 
 
 class SettingsUpdate(BaseModel):
-    llm_provider: Literal["openai", "deepseek", "anthropic", "ollama", "zai"] = "zai"
-    llm_model: str = "glm-5"
-    embedding_provider: Literal["openai", "gemini", "ollama"] = "gemini"
-    embedding_model: str = "gemini-embedding-2-preview"
+    llm_provider: Literal["openai", "deepseek", "anthropic", "ollama", "zai"]
+    llm_model: str
+    embedding_provider: Literal["openai", "gemini", "ollama"]
+    embedding_model: str
 
 
 class SettingsResponse(BaseModel):
@@ -21,15 +23,30 @@ class SettingsResponse(BaseModel):
 
 @router.get("/v1", response_model=SettingsResponse)
 async def get_settings():
-    """Get current settings"""
-    from app.core.config import settings
+    """Get current effective settings (runtime override > env default)."""
+    rt = get_runtime_settings()
+    return SettingsResponse(**rt)
 
-    return SettingsResponse(
-        llm_provider=settings.DEFAULT_LLM_PROVIDER,
-        llm_model=settings.DEFAULT_LLM_MODEL or "glm-5",
-        embedding_provider=settings.DEFAULT_EMBEDDING_PROVIDER,
-        embedding_model=settings.DEFAULT_EMBEDDING_MODEL or "gemini-embedding-2-preview",
+
+@router.post("/", response_model=SettingsResponse)
+async def update_settings(update: SettingsUpdate):
+    """Persist settings to data/settings.json. No backend restart required.
+
+    The LLM and embedding services re-read these on the next request, so model
+    switches take effect immediately. Changing the embedding model after vectors
+    already exist requires deleting the Qdrant collection (dimension mismatch);
+    the service logs a warning in that case.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Saving runtime settings: {update.model_dump()}")
+    saved = save_runtime_settings(
+        llm_provider=update.llm_provider,
+        llm_model=update.llm_model,
+        embedding_provider=update.embedding_provider,
+        embedding_model=update.embedding_model,
     )
+    return SettingsResponse(**saved)
 
 
 @router.get("/v1/llm-models")
@@ -55,7 +72,7 @@ async def get_llm_models():
         models["openai"] = ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"]
 
     # DeepSeek models (hardcoded - no public models API)
-    models["deepseek"] = ["deepseek-chat", "deepseek-coder"]
+    models["deepseek"] = ["deepseek-chat", "deepseek-coder", "deepseek-reasoner"]
 
     # Anthropic models (hardcoded - no public models API)
     models["anthropic"] = [
@@ -125,7 +142,7 @@ async def get_embedding_models():
         models["openai"] = ["text-embedding-3-small", "text-embedding-3-large", "text-embedding-ada-002"]
 
     # Gemini embedding models (hardcoded - no public models API for embeddings)
-    models["gemini"] = ["gemini-embedding-2-preview", "gemini-embedding-001"]
+    models["gemini"] = ["gemini-embedding-001", "gemini-embedding-2-preview"]
 
     # Ollama embedding models - fetch from local API and filter for embedding-capable models
     try:
@@ -147,29 +164,3 @@ async def get_embedding_models():
 
     logger.info(f"Returning embedding models for all providers: {list(models.keys())}")
     return {"models": models}
-
-
-@router.post("/")
-async def update_settings(update: SettingsUpdate):
-    """Update settings (for testing - normally via .env file)"""
-    from app.core.config import settings
-    import logging
-
-    logger = logging.getLogger(__name__)
-
-    logger.info(f"Updating settings: {update.model_dump()}")
-
-    # Note: For production, settings should be changed via environment variables
-    # This endpoint allows testing configuration changes without restart
-    logger.warning(
-        "Settings changes require backend restart. "
-        f"Update .env file with: DEFAULT_LLM_PROVIDER={update.llm_provider}, "
-        f"DEFAULT_LLM_MODEL={update.llm_model}, "
-        f"DEFAULT_EMBEDDING_PROVIDER={update.embedding_provider}, "
-        f"DEFAULT_EMBEDDING_MODEL={update.embedding_model}"
-    )
-
-    return {
-        "message": "Settings updated. Backend restart required for changes to take effect.",
-        "settings": update.model_dump(),
-    }

@@ -52,3 +52,9 @@ Thumbs.db
 extension/dist/
 extension/*.crx
 extension/*.pem
+
+# graphify knowledge graph output
+graphify-out/
+
+# Stray literal $HOME dir (LifeOS hook leak)
+$HOME/

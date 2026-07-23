@@ -14,8 +14,8 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for development
-    allow_credentials=True,
+    allow_origins=["*"],  # Self-hosted; no cookies/credentials used by the SPA
+    allow_credentials=False,  # credentials=True + origin "*" is rejected by browsers
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -32,11 +32,11 @@ app.include_router(settings_route.router, prefix="/api/v1/settings", tags=["sett
 async def startup_event():
     """Initialize Qdrant collection on startup"""
     from app.services.qdrant_service import qdrant_service
-    from app.core.config import settings
+    from app.services.embedding_service import embedding_vector_size
+    from app.core.runtime_settings import get_runtime_settings
 
-    # Determine vector size based on embedding provider
-    # Gemini gemini-embedding-001: 3072, OpenAI text-embedding-3-small: 1536
-    vector_size = 3072 if settings.DEFAULT_EMBEDDING_PROVIDER == "gemini" else 1536
+    rt = get_runtime_settings()
+    vector_size = embedding_vector_size(rt["embedding_provider"], rt["embedding_model"])
     await qdrant_service.initialize_collection(vector_size=vector_size)
 
 

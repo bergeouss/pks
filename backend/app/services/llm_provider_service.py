@@ -1,24 +1,32 @@
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from app.core.config import settings
+from app.core.runtime_settings import get_runtime_settings
 import logging
 
 logger = logging.getLogger(__name__)
 
 
 class LLMProviderService:
-    """Multi-provider LLM service using LangChain"""
+    """Multi-provider LLM service using LangChain.
+
+    Reads the active provider/model from the runtime override layer so the
+    Settings UI can switch models without a backend restart.
+    """
 
     def __init__(self):
-        self._current_provider = None
+        self._cache_key = None
         self._llm = None
 
     def get_llm(self, provider: str = None, model: str = None):
-        """Get LLM instance for specified provider"""
-        provider = provider or settings.DEFAULT_LLM_PROVIDER
+        """Get LLM instance for specified provider/model (defaults to runtime settings)."""
+        rt = get_runtime_settings()
+        provider = provider or rt["llm_provider"]
+        model = model or rt["llm_model"]
+        cache_key = (provider, model)
 
-        # Return cached LLM if provider hasn't changed
-        if self._current_provider == provider and self._llm:
+        # Return cached LLM if provider+model hasn't changed
+        if self._cache_key == cache_key and self._llm:
             return self._llm
 
         if provider == "openai":
@@ -64,8 +72,8 @@ class LLMProviderService:
         else:
             raise ValueError(f"Unknown provider: {provider}")
 
-        self._current_provider = provider
-        logger.info(f"Initialized LLM with provider: {provider}")
+        self._cache_key = cache_key
+        logger.info(f"Initialized LLM with provider: {provider}, model: {model}")
         return self._llm
 
 

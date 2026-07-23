@@ -34,10 +34,10 @@ services:
       - ZAI_API_KEY=${ZAI_API_KEY}
       - ZAI_BASE_URL=${ZAI_BASE_URL:-https://api.z.ai/api/coding/paas/v4}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - DEFAULT_LLM_PROVIDER=${DEFAULT_LLM_PROVIDER:-zai}
-      - DEFAULT_LLM_MODEL=${DEFAULT_LLM_MODEL:-gpt-4o-mini}
-      - DEFAULT_EMBEDDING_PROVIDER=${DEFAULT_EMBEDDING_PROVIDER:-gemini}
-      - DEFAULT_EMBEDDING_MODEL=${DEFAULT_EMBEDDING_MODEL:-text-embedding-3-small}
+      - DEFAULT_LLM_PROVIDER=deepseek
+      - DEFAULT_LLM_MODEL=deepseek-chat
+      - DEFAULT_EMBEDDING_PROVIDER=gemini
+      - DEFAULT_EMBEDDING_MODEL=gemini-embedding-001
       - OLLAMA_BASE_URL=http://host.docker.internal:11434
     volumes:
       - ./data:/app/data
@@ -57,7 +57,7 @@ services:
     ports:
       - "3100:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://backend:8000
+      - NEXT_PUBLIC_API_URL=http://localhost:8100
     depends_on:
       - backend
     restart: unless-stopped
