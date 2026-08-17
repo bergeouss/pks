@@ -32,8 +32,8 @@ export default function SettingsPage() {
   const [health, setHealth] = useState<HealthStatus | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [settings, setSettings] = useState<SettingsState>({
-    llmProvider: 'zai',
-    llmModel: 'glm-5',
+    llmProvider: 'opencodego',
+    llmModel: 'deepseek-v4-flash',
     embeddingProvider: 'gemini',
     embeddingModel: 'gemini-embedding-2-preview',
   })
@@ -74,6 +74,7 @@ export default function SettingsPage() {
       anthropic: ['claude-3-5-haiku-20241022', 'claude-3-5-sonnet-20241022', 'claude-3-opus-20240229', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307'],
       ollama: [],  // Will be populated from local Ollama if running
       zai: ['glm-4.5', 'glm-4.5-air', 'glm-4.6', 'glm-4.7', 'glm-4.7-flash', 'glm-5', 'glm-5-turbo'],
+      opencodego: ['deepseek-v4-flash', 'deepseek-v4-pro', 'glm-5', 'glm-5.1', 'glm-5.2', 'kimi-k3', 'qwen3.8-max'],
     }
 
     try {
@@ -320,6 +321,7 @@ export default function SettingsPage() {
                 <option value="anthropic">Anthropic (Claude)</option>
                 <option value="ollama">Ollama (Local)</option>
                 <option value="zai">Z.ai (GLM)</option>
+                <option value="opencodego">OpenCodeGo</option>
               </select>
             </div>
 

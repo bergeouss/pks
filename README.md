@@ -7,7 +7,7 @@ A self-hosted, Docker-based personal knowledge management system with RAG-powere
 - **Multi-source ingestion**: Web pages (browser extension), documents (PDF, DOCX, TXT), YouTube transcripts, file watcher
 - **Semantic search**: Vector embeddings powered by Qdrant
 - **RAG-powered chat**: AI assistant with source citations
-- **Multi-provider AI**: OpenAI, DeepSeek, Anthropic, Ollama, Z.ai (GLM) support
+- **Multi-provider AI**: OpenAI, DeepSeek, Anthropic, Ollama, Z.ai (GLM), OpenCodeGo support
 - **Multi-provider embeddings**: OpenAI, Google Gemini support
 - **Privacy-first**: Self-hosted, no data leaves your infrastructure
 
@@ -225,8 +225,8 @@ DEFAULT_EMBEDDING_PROVIDER=openai
 
 ```bash
 # Choose your default LLM
-DEFAULT_LLM_PROVIDER=zai
-# Options: openai, deepseek, anthropic, ollama, zai
+DEFAULT_LLM_PROVIDER=opencodego
+# Options: openai, deepseek, anthropic, ollama, zai, opencodego
 ```
 
 ### Optional Configuration

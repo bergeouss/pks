@@ -33,9 +33,11 @@ services:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - ZAI_API_KEY=${ZAI_API_KEY}
       - ZAI_BASE_URL=${ZAI_BASE_URL:-https://api.z.ai/api/coding/paas/v4}
+      - OPENCODEGO_API_KEY=${OPENCODEGO_API_KEY}
+      - OPENCODEGO_BASE_URL=${OPENCODEGO_BASE_URL:-https://opencode.ai/zen/go/v1}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - DEFAULT_LLM_PROVIDER=deepseek
-      - DEFAULT_LLM_MODEL=deepseek-chat
+      - DEFAULT_LLM_PROVIDER=${DEFAULT_LLM_PROVIDER:-opencodego}
+      - DEFAULT_LLM_MODEL=${DEFAULT_LLM_MODEL:-deepseek-v4-flash}
       - DEFAULT_EMBEDDING_PROVIDER=gemini
       - DEFAULT_EMBEDDING_MODEL=gemini-embedding-001
       - OLLAMA_BASE_URL=http://host.docker.internal:11434

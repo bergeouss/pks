@@ -8,7 +8,7 @@ router = APIRouter()
 
 
 class SettingsUpdate(BaseModel):
-    llm_provider: Literal["openai", "deepseek", "anthropic", "ollama", "zai"]
+    llm_provider: Literal["openai", "deepseek", "anthropic", "ollama", "zai", "opencodego"]
     llm_model: str
     embedding_provider: Literal["openai", "gemini", "ollama"]
     embedding_model: str
@@ -112,6 +112,29 @@ async def get_llm_models():
     except Exception as e:
         logger.warning(f"Could not fetch Z.ai models: {e}")
         models["zai"] = ["glm-5", "glm-4", "glm-4-plus", "glm-4-air", "glm-4.7-flash"]
+
+    # OpenCodeGo models - fetch from API (OpenAI-compatible)
+    try:
+        if settings.OPENCODEGO_API_KEY:
+            from openai import OpenAI
+            client = OpenAI(
+                api_key=settings.OPENCODEGO_API_KEY,
+                base_url=settings.OPENCODEGO_BASE_URL
+            )
+            response = client.models.list()
+            models["opencodego"] = sorted([model.id for model in response.data])
+            logger.info(f"Fetched OpenCodeGo models: {len(models['opencodego'])} models")
+    except Exception as e:
+        logger.warning(f"Could not fetch OpenCodeGo models: {e}")
+        models["opencodego"] = [
+            "deepseek-v4-flash",
+            "deepseek-v4-pro",
+            "glm-5",
+            "glm-5.1",
+            "glm-5.2",
+            "kimi-k3",
+            "qwen3.8-max",
+        ]
 
     logger.info(f"Returning models for all providers: {list(models.keys())}")
     return {"models": models}

@@ -75,6 +75,15 @@ class LLMProviderService:
                 base_url=settings.ZAI_BASE_URL,
                 temperature=0.7,
             )
+        elif provider == "opencodego":
+            if not settings.OPENCODEGO_API_KEY:
+                raise ValueError("OPENCODEGO_API_KEY not configured")
+            self._llm = ChatOpenAI(
+                model=model or "deepseek-v4-flash",
+                openai_api_key=settings.OPENCODEGO_API_KEY,
+                base_url=settings.OPENCODEGO_BASE_URL,
+                temperature=0.7,
+            )
         else:
             raise ValueError(f"Unknown provider: {provider}")
 

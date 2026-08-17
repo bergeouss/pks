@@ -9,14 +9,16 @@ class Settings(BaseSettings):
     QDRANT_COLLECTION_NAME: str = "knowledge_base"
 
     # LLM Providers
-    DEFAULT_LLM_PROVIDER: Literal["openai", "deepseek", "anthropic", "ollama", "zai"] = "openai"
-    DEFAULT_LLM_MODEL: str = "gpt-4o-mini"
+    DEFAULT_LLM_PROVIDER: Literal["openai", "deepseek", "anthropic", "ollama", "zai", "opencodego"] = "opencodego"
+    DEFAULT_LLM_MODEL: str = "deepseek-v4-flash"
     OPENAI_API_KEY: str = ""
     DEEPSEEK_API_KEY: str = ""
     ANTHROPIC_API_KEY: str = ""
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     ZAI_API_KEY: str = ""
     ZAI_BASE_URL: str = "https://api.z.ai/api/coding/paas/v4"
+    OPENCODEGO_API_KEY: str = ""
+    OPENCODEGO_BASE_URL: str = "https://opencode.ai/zen/go/v1"
 
     # Embedding
     DEFAULT_EMBEDDING_PROVIDER: Literal["openai", "gemini", "ollama"] = "gemini"
