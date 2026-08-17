@@ -51,3 +51,10 @@ export interface HealthResponse {
   qdrant_connected: boolean
   collection_name: string
 }
+
+export interface SettingsResponse {
+  llm_provider: string
+  llm_model: string
+  embedding_provider: string
+  embedding_model: string
+}

@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Literal
 
 
@@ -20,7 +20,7 @@ class Settings(BaseSettings):
 
     # Embedding
     DEFAULT_EMBEDDING_PROVIDER: Literal["openai", "gemini", "ollama"] = "gemini"
-    DEFAULT_EMBEDDING_MODEL: str = "text-embedding-3-small"
+    DEFAULT_EMBEDDING_MODEL: str = "gemini-embedding-001"
     GEMINI_API_KEY: str = ""
 
     # Chunking
@@ -33,10 +33,11 @@ class Settings(BaseSettings):
     # Frontend
     NEXT_PUBLIC_API_URL: str = "http://localhost:8000"
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
-        extra = "ignore"  # Allow extra fields in .env file
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="ignore",
+    )
 
 
 settings = Settings()

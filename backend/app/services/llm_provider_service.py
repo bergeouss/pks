@@ -55,9 +55,15 @@ class LLMProviderService:
                 temperature=0.7,
             )
         elif provider == "ollama":
+            if not settings.OLLAMA_BASE_URL:
+                raise ValueError("OLLAMA_BASE_URL not configured")
+            # Ollama exposes an OpenAI-compatible API under /v1
+            base = settings.OLLAMA_BASE_URL.rstrip("/")
+            if not base.endswith("/v1"):
+                base += "/v1"
             self._llm = ChatOpenAI(
                 model=model or "llama3",
-                base_url=settings.OLLAMA_BASE_URL,
+                base_url=base,
                 temperature=0.7,
             )
         elif provider == "zai":
